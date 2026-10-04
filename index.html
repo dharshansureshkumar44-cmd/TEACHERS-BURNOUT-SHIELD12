@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Burnout Shield | Educator Wellness & Boundary System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            shield: {
+              50: '#f0fdfa',
+              100: '#ccfbf1',
+              500: '#14b8a6',
+              600: '#0d9488',
+              700: '#0f766e',
+              800: '#115e59',
+              900: '#134e4a',
+              950: '#042f2e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Custom Glassmorphism Styles -->
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background-color: #020617;
+      color: #f8fafc;
+    }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-input {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(8px);
+    }
+    .glass-input:focus {
+      border-color: rgba(20, 184, 166, 0.6);
+      box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.15);
+      outline: none;
+    }
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.8);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(51, 65, 85, 0.8);
+      border-radius: 4px;
+    }
+  </style>
+
+  <!-- React 18, ReactDOM 18, Babel Standalone -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 selection:bg-teal-500 selection:text-slate-900">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // --- NLP Sentiment Engine ---
+    const POSITIVE_MARKERS = ['great', 'happy', 'productive', 'accomplished', 'supported', 'inspired', 'grateful', 'relaxed', 'calm', 'energized', 'rewarding', 'enjoyed', 'progress', 'helpful', 'balanced'];
+    const STRESS_MARKERS = ['overwhelmed', 'exhausted', 'tired', 'drained', 'stressed', 'anxious', 'impossible', 'too much', 'grading', 'stack', 'pile', 'late', 'demanding', 'unreasonable', 'frustrated', 'burnout', 'no time', 'furious', 'swamped', 'depleted'];
+    const ADMIN_OVERLOAD_MARKERS = ['paperwork', 'compliance', 'meeting', 'grading', 'documentation', 'ieps', 'rubric', 'administrative', 'bureaucracy', 'emails', 'reports', 'lesson plans', 'curriculum'];
+
+    function analyzeSentiment(text = "") {
+      const lower = text.toLowerCase();
+      let posCount = 0, stressCount = 0, adminCount = 0;
+      POSITIVE_MARKERS.forEach(w => { if (lower.includes(w)) posCount++; });
+      STRESS_MARKERS.forEach(w => { if (lower.includes(w)) stressCount++; });
+      ADMIN_OVERLOAD_MARKERS.forEach(w => { if (lower.includes(w)) adminCount++; });
+
+      const net = posCount - stressCount;
+      let sentimentCategory = 'Neutral';
+      if (net > 1) sentimentCategory = 'Positive & Fulfilling';
+      else if (net < -2) sentimentCategory = 'High Emotional Strain';
+      else if (net < 0) sentimentCategory = 'Moderate Fatigue';
+
+      const detectedEmotions = [];
+      if (stressCount > 2) detectedEmotions.push('Overwhelmed');
+      if (adminCount > 2) detectedEmotions.push('Administrative Fatigue');
+      if (posCount > 1) detectedEmotions.push('Fulfilling Moments');
+      if (lower.includes('tired') || lower.includes('exhausted')) detectedEmotions.push('Physical Exhaustion');
+      if (lower.includes('late') || lower.includes('parent')) detectedEmotions.push('Boundary Intrusion');
+      if (detectedEmotions.length === 0) detectedEmotions.push(net >= 0 ? 'Steady' : 'Mild Strain');
+
+      return { netScore: net, posCount, stressCount, adminCount, sentimentCategory, detectedEmotions };
+    }
+
+    function calculateBurnoutRisk({ moodScore = 3, workloadHours = 8, sentimentData = {}, afterHoursCount = 2 }) {
+      let riskScore = (5 - moodScore) * 10;
+      if (workloadHours > 7.5) riskScore += (workloadHours - 7.5) * 6;
+      if (sentimentData.stressCount) riskScore += sentimentData.stressCount * 4;
+      if (sentimentData.adminCount) riskScore += sentimentData.adminCount * 3;
+      if (sentimentData.posCount) riskScore -= sentimentData.posCount * 3;
+      riskScore += afterHoursCount * 4;
+
+      riskScore = Math.max(5, Math.min(98, Math.round(riskScore)));
+
+      let tier = 'LOW', color = 'text-emerald-400', badgeBg = 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400', label = 'Healthy Boundary Balance', description = 'Workload and emotional state are within sustainable parameters.';
+
+      if (riskScore >= 75) {
+        tier = 'CRITICAL'; color = 'text-rose-500'; badgeBg = 'bg-rose-500/15 border-rose-500/30 text-rose-400';
+        label = 'Critical Burnout Alert'; description = 'Immediate boundary enforcement and administrative workload relief required.';
+      } else if (riskScore >= 50) {
+        tier = 'HIGH'; color = 'text-amber-500'; badgeBg = 'bg-amber-500/15 border-amber-500/30 text-amber-400';
+        label = 'High Exhaustion Risk'; description = 'Elevated emotional labor and administrative fatigue detected.';
+      } else if (riskScore >= 25) {
+        tier = 'MODERATE'; color = 'text-yellow-400'; badgeBg = 'bg-yellow-500/15 border-yellow-500/30 text-yellow-300';
+        label = 'Moderate Stress Warning'; description = 'Minor boundary erosion detected. Monitor grading & email hours.';
+      }
+
+      return { score: riskScore, tier, color, badgeBg, label, description };
+    }
+
+    // --- Communication Shield Triager ---
+    const MOCK_MESSAGES = [
+      {
+        id: 'msg-1', senderName: 'Patricia Vance (Parent)', studentName: 'Ethan Vance', timestamp: '9:42 PM',
+        rawText: "I saw Ethan got a 72% on his History essay. This is unacceptable! He studied all weekend. I need an explanation immediately tonight or I am calling the principal tomorrow morning!",
+        urgencyLevel: 'HIGH_STRESS'
+      },
+      {
+        id: 'msg-2', senderName: 'Marcus Wright (Student)', studentName: 'Marcus Wright', timestamp: '10:15 PM',
+        rawText: "Mr. Davis, I forgot where the lab safety submission link is on Google Classroom. Is it due tomorrow at 8 AM? Sorry for bothering so late!",
+        urgencyLevel: 'STANDARD'
+      },
+      {
+        id: 'msg-3', senderName: 'Sarah Jenkins (Parent)', studentName: 'Leo Jenkins', timestamp: '11:05 PM',
+        rawText: "URGENT SAFETY NOTICE: Leo had an allergic reaction tonight and was admitted to urgent care. He will be absent tomorrow and needs his asthma inhaler accommodations logged.",
+        urgencyLevel: 'EMERGENCY'
+      }
+    ];
+
+    function triageQuery(message) {
+      const text = message.rawText.toLowerCase();
+      if (text.includes('urgent safety') || text.includes('hospital') || text.includes('allergic') || text.includes('emergency')) {
+        return {
+          status: 'EMERGENCY_BYPASS', badgeColor: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
+          actionLabel: 'Immediate Alert Bypassed Shield', scheduledTime: 'Immediate Delivery (Safety Rule)',
+          toneSoftenedText: message.rawText, aiDraft: 'Immediate safety notification dispatched to educator device.'
+        };
+      }
+      if (text.includes('unacceptable') || text.includes('immediately') || text.includes('calling the principal') || text.includes('demand')) {
+        return {
+          status: 'SHIELDED_TONE_SOFTENED', badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+          actionLabel: 'Tone Shielded & Morning Scheduled', scheduledTime: 'Tomorrow at 8:15 AM (Office Hours)',
+          toneSoftenedText: `[Shield Filtered Summary]: Parent (${message.senderName}) expressed concern regarding student essay grade and requested a review during office hours.`,
+          aiDraft: `Dear Parent,\n\nThank you for reaching out. I value your child's academic progress. I am currently outside of office hours and will review the essay rubrics during my morning planning period tomorrow at 8:15 AM.\n\nBest regards,\nEducator Communication Shield`
+        };
+      }
+      return {
+        status: 'AUTO_SCHEDULED_MORNING', badgeColor: 'bg-teal-500/20 text-teal-300 border-teal-500/30',
+        actionLabel: 'Queued for Morning Dispatch', scheduledTime: 'Tomorrow at 8:00 AM (Quiet Hours Active)',
+        toneSoftenedText: message.rawText,
+        aiDraft: `Hello,\n\nThank you for your note. The requested information will be processed when office hours reopen at 8:00 AM tomorrow.\n\nBest regards,\nEducator Office Hours Assistant`
+      };
+    }
+
+    // --- Main Application Component ---
+    function App() {
+      const [role, setRole] = useState('EDUCATOR'); // EDUCATOR | ADMIN
+      const [activeTab, setActiveTab] = useState('CHECK_IN');
+      const [activeShield, setActiveShield] = useState(true);
+
+      // Check-In Form State
+      const [selectedMood, setSelectedMood] = useState(2);
+      const [gradingHours, setGradingHours] = useState(3.0);
+      const [prepHours, setPrepHours] = useState(2.0);
+      const [meetingHours, setMeetingHours] = useState(1.5);
+      const [journalText, setJournalText] = useState(
+        "Spent 3.5 hours grading AP History essays tonight. Feeling overwhelmed by late resubmissions and demanding parent emails."
+      );
+      const [savedSuccess, setSavedSuccess] = useState(false);
+
+      // History Logs State
+      const [historyLogs, setHistoryLogs] = useState([
+        { date: 'Mon', moodScore: 4, totalWorkloadHours: 5.0, risk: 22 },
+        { date: 'Tue', moodScore: 3, totalWorkloadHours: 6.5, risk: 38 },
+        { date: 'Wed', moodScore: 2, totalWorkloadHours: 7.5, risk: 58 },
+        { date: 'Thu', moodScore: 2, totalWorkloadHours: 8.0, risk: 68 },
+        { date: 'Fri', moodScore: 1, totalWorkloadHours: 9.0, risk: 82 },
+      ]);
+
+      // Message Feed State
+      const [messages, setMessages] = useState(MOCK_MESSAGES);
+      const [simParent, setSimParent] = useState('Helena Troy (Parent)');
+      const [simText, setSimText] = useState('');
+
+      const totalWorkloadHours = Number(gradingHours) + Number(prepHours) + Number(meetingHours);
+      const sentiment = analyzeSentiment(journalText);
+
+      const latestLog = {
+        moodScore: selectedMood,
+        totalWorkloadHours,
+        sentimentData: sentiment
+      };
+      const riskResult = calculateBurnoutRisk(latestLog);
+
+      const handleSaveCheckIn = () => {
+        const newLog = {
+          date: 'Today',
+          moodScore: selectedMood,
+          totalWorkloadHours,
+          risk: riskResult.score
+        };
+        setHistoryLogs([...historyLogs, newLog]);
+        setSavedSuccess(true);
+        setTimeout(() => setSavedSuccess(false), 3000);
+      };
+
+      const handleSimulateMsg = (e) => {
+        e.preventDefault();
+        if (!simText.trim()) return;
+        const newM = {
+          id: `msg-${Date.now()}`,
+          senderName: simParent || 'Parent',
+          studentName: 'Student',
+          timestamp: 'Just Now',
+          rawText: simText
+        };
+        setMessages([newM, ...messages]);
+        setSimText('');
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col">
+          {/* Header */}
+          <header className="sticky top-0 z-50 glass-card border-b border-slate-800 bg-slate-950/80 backdrop-blur-xl">
+            <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-teal-500 to-emerald-400 text-slate-950 flex items-center justify-center font-bold text-2xl shadow-lg shadow-teal-500/20">
+                  🛡️
+                </div>
+                <div>
+                  <h1 className="text-lg font-black tracking-tight text-white flex items-center gap-2">
+                    Teacher Burnout Shield <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/15 text-teal-300 border border-teal-500/30">v1.0</span>
+                  </h1>
+                  <p className="text-xs text-slate-400">Educator Boundary & Wellness Telemetry</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setActiveShield(!activeShield)}
+                  className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                    activeShield ? 'bg-teal-500/15 border-teal-500/30 text-teal-300' : 'bg-slate-900 border-slate-800 text-slate-500'
+                  }`}
+                >
+                  🔔 Shield: {activeShield ? 'ACTIVE (Quiet Hours)' : 'PAUSED'}
+                </button>
+
+                {/* Role Switcher */}
+                <div className="bg-slate-900 p-1 rounded-xl border border-slate-800 flex text-xs font-bold">
+                  <button
+                    onClick={() => setRole('EDUCATOR')}
+                    className={`px-3 py-1.5 rounded-lg transition-all ${role === 'EDUCATOR' ? 'bg-teal-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-slate-200'}`}
+                  >
+                    Educator View
+                  </button>
+                  <button
+                    onClick={() => setRole('ADMIN')}
+                    className={`px-3 py-1.5 rounded-lg transition-all ${role === 'ADMIN' ? 'bg-indigo-500 text-white font-bold' : 'text-slate-400 hover:text-slate-200'}`}
+                  >
+                    School Admin View
+                  </button>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* Main Body */}
+          <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-8 space-y-6">
+            
+            {/* Educator View Navigation */}
+            {role === 'EDUCATOR' && (
+              <div className="flex items-center gap-2 border-b border-slate-800 pb-2 text-xs font-bold overflow-x-auto">
+                <button
+                  onClick={() => setActiveTab('CHECK_IN')}
+                  className={`px-4 py-2.5 rounded-xl transition-all whitespace-nowrap ${
+                    activeTab === 'CHECK_IN' ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40' : 'bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  📝 Daily Check-In UI
+                </button>
+                <button
+                  onClick={() => setActiveTab('ANALYZER')}
+                  className={`px-4 py-2.5 rounded-xl transition-all whitespace-nowrap ${
+                    activeTab === 'ANALYZER' ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40' : 'bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  📊 Burnout Risk Analyzer
+                </button>
+                <button
+                  onClick={() => setActiveTab('SHIELD')}
+                  className={`px-4 py-2.5 rounded-xl transition-all whitespace-nowrap ${
+                    activeTab === 'SHIELD' ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40' : 'bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  🛡️ Communication Shield
+                </button>
+                <button
+                  onClick={() => setActiveTab('PRIVACY')}
+                  className={`px-4 py-2.5 rounded-xl transition-all whitespace-nowrap ${
+                    activeTab === 'PRIVACY' ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40' : 'bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  🔒 Privacy & Access Control
+                </button>
+              </div>
+            )}
+
+            {/* TAB 1: DAILY CHECK-IN */}
+            {role === 'EDUCATOR' && activeTab === 'CHECK_IN' && (
+              <div className="space-y-6">
+                <div className="glass-card rounded-2xl p-6 border border-teal-500/20 bg-gradient-to-r from-slate-900 via-teal-950/20 to-slate-900">
+                  <div className="inline-block px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-400 text-xs font-semibold mb-2">
+                    Private Sanctuary
+                  </div>
+                  <h2 className="text-2xl font-extrabold text-white">Daily Emotional & Workload Check-In</h2>
+                  <p className="text-slate-400 text-sm mt-1">Log your mood, administrative burden, and reflection notes. Entries remain 100% confidential.</p>
+                </div>
+
+                {savedSuccess && (
+                  <div className="p-4 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-medium text-sm">
+                    ✓ Check-In saved securely! Burnout risk index recalculated.
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  <div className="lg:col-span-7 space-y-6">
+                    {/* Mood Selector */}
+                    <div className="glass-card rounded-2xl p-6 space-y-4">
+                      <label className="text-sm font-semibold text-slate-200 block">1. How is your emotional energy today?</label>
+                      <div className="grid grid-cols-5 gap-2">
+                        {[
+                          { level: 1, label: 'Exhausted', emoji: '😫' },
+                          { level: 2, label: 'Drained', emoji: '😔' },
+                          { level: 3, label: 'Steady', emoji: '😐' },
+                          { level: 4, label: 'Energized', emoji: '😊' },
+                          { level: 5, label: 'Thriving', emoji: '🌟' }
+                        ].map(item => (
+                          <button
+                            key={item.level}
+                            type="button"
+                            onClick={() => setSelectedMood(item.level)}
+                            className={`p-3 rounded-xl border flex flex-col items-center justify-center transition-all ${
+                              selectedMood === item.level
+                                ? 'bg-teal-500/20 border-teal-400 text-teal-300 ring-2 ring-teal-400 scale-[1.02]'
+                                : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200'
+                            }`}
+                          >
+                            <span className="text-2xl mb-1">{item.emoji}</span>
+                            <span className="text-[11px] font-semibold">{item.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Admin Hours */}
+                    <div className="glass-card rounded-2xl p-6 space-y-4">
+                      <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                        <label className="text-sm font-semibold text-slate-200">2. Administrative Time Log (Hours)</label>
+                        <span className="text-xs font-mono font-bold px-2.5 py-1 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                          Total: {totalWorkloadHours.toFixed(1)} hrs
+                        </span>
+                      </div>
+                      <div className="space-y-3 text-xs">
+                        <div>
+                          <div className="flex justify-between text-slate-300 mb-1">
+                            <span>Grading & Feedback</span>
+                            <span className="font-mono text-teal-400">{gradingHours} hrs</span>
+                          </div>
+                          <input type="range" min="0" max="6" step="0.5" value={gradingHours} onChange={e => setGradingHours(e.target.value)} className="w-full accent-teal-400" />
+                        </div>
+                        <div>
+                          <div className="flex justify-between text-slate-300 mb-1">
+                            <span>Lesson Prep</span>
+                            <span className="font-mono text-teal-400">{prepHours} hrs</span>
+                          </div>
+                          <input type="range" min="0" max="5" step="0.5" value={prepHours} onChange={e => setPrepHours(e.target.value)} className="w-full accent-teal-400" />
+                        </div>
+                        <div>
+                          <div className="flex justify-between text-slate-300 mb-1">
+                            <span>Meetings & Admin</span>
+                            <span className="font-mono text-teal-400">{meetingHours} hrs</span>
+                          </div>
+                          <input type="range" min="0" max="4" step="0.5" value={meetingHours} onChange={e => setMeetingHours(e.target.value)} className="w-full accent-teal-400" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Journal Textarea */}
+                    <div className="glass-card rounded-2xl p-6 space-y-4">
+                      <label className="text-sm font-semibold text-slate-200 block">3. Natural Language Journal & Reflection</label>
+                      <textarea
+                        rows={4}
+                        value={journalText}
+                        onChange={e => setJournalText(e.target.value)}
+                        placeholder="Express how your day felt..."
+                        className="w-full glass-input rounded-xl p-3 text-xs text-slate-100 resize-none"
+                      />
+                      <button
+                        onClick={handleSaveCheckIn}
+                        className="w-full py-3 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 font-bold text-slate-950 text-xs transition-all shadow-lg shadow-teal-500/20"
+                      >
+                        ✓ Save Confidential Daily Log
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* NLP Live Analysis */}
+                  <div className="lg:col-span-5 space-y-6">
+                    <div className="glass-card rounded-2xl p-6 space-y-4 border-l-4 border-l-teal-500">
+                      <h3 className="text-sm font-bold text-slate-200">Real-Time NLP Sentiment Insights</h3>
+                      <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-2 text-xs">
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Tone Category:</span>
+                          <span className="font-bold text-teal-300">{sentiment.sentimentCategory}</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1 pt-1">
+                          {sentiment.detectedEmotions.map((t, i) => (
+                            <span key={i} className="px-2 py-0.5 rounded bg-teal-500/10 border border-teal-500/20 text-teal-300 font-semibold">#{t}</span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="glass-card rounded-2xl p-6 space-y-3 bg-gradient-to-b from-slate-900 to-slate-950">
+                      <h3 className="text-sm font-bold text-amber-400">⚡ Micro-Break Prescription</h3>
+                      <p className="text-xs text-slate-300 leading-relaxed">
+                        {totalWorkloadHours > 6 ? "High administrative grading load detected. Activate Quiet Hours Shield from 5:30 PM today and limit email responses until morning." : "Energy levels remain stable. Keep enforcing evening boundary schedules."}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: BURNOUT RISK ANALYZER */}
+            {role === 'EDUCATOR' && activeTab === 'ANALYZER' && (
+              <div className="space-y-6">
+                <div className="glass-card rounded-2xl p-6 border border-amber-500/20 bg-gradient-to-r from-slate-900 via-amber-950/20 to-slate-900">
+                  <h2 className="text-2xl font-extrabold text-white">Burnout Risk Analyzer</h2>
+                  <p className="text-slate-400 text-sm mt-1">Predictive wellness metrics combining sentiment markers, overtime hours, and after-hours communications.</p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  {/* Gauge */}
+                  <div className="lg:col-span-5 glass-card rounded-2xl p-6 flex flex-col items-center justify-center text-center space-y-3">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Burnout Risk Score</span>
+                    <div className={`text-6xl font-black font-mono ${riskResult.color}`}>{riskResult.score}</div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold border ${riskResult.badgeBg}`}>
+                      {riskResult.tier} RISK • {riskResult.label}
+                    </span>
+                    <p className="text-xs text-slate-400 max-w-xs pt-2">{riskResult.description}</p>
+                  </div>
+
+                  {/* Trend chart substitute */}
+                  <div className="lg:col-span-7 glass-card rounded-2xl p-6 space-y-4">
+                    <h3 className="text-sm font-bold text-slate-200">Weekly Telemetry Trend (Workload vs Risk)</h3>
+                    <div className="space-y-3 pt-2">
+                      {historyLogs.map((log, idx) => (
+                        <div key={idx} className="space-y-1">
+                          <div className="flex justify-between text-xs font-semibold">
+                            <span className="text-slate-300">{log.date}</span>
+                            <span className="text-amber-400">{log.totalWorkloadHours} hrs work | Risk: {log.risk || 40}</span>
+                          </div>
+                          <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden flex">
+                            <div className="bg-teal-500 h-full" style={{ width: `${Math.min(100, log.totalWorkloadHours * 10)}%` }}></div>
+                            <div className="bg-rose-500 h-full" style={{ width: `${(log.risk || 40) / 2}%` }}></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: COMMUNICATION SHIELD */}
+            {role === 'EDUCATOR' && activeTab === 'SHIELD' && (
+              <div className="space-y-6">
+                <div className="glass-card rounded-2xl p-6 border border-teal-500/20 bg-gradient-to-r from-slate-900 via-teal-950/20 to-slate-900 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-extrabold text-white">After-Hours Communication Shield</h2>
+                    <p className="text-slate-400 text-sm mt-1">Context-aware AI response agent that filters late queries and softens hostile parent email tone.</p>
+                  </div>
+
+                  <button
+                    onClick={() => setActiveShield(!activeShield)}
+                    className={`px-4 py-2.5 rounded-xl font-bold text-xs ${activeShield ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-teal-500 text-slate-950'}`}
+                  >
+                    {activeShield ? 'Pause Shield' : 'Activate Quiet Hours Shield'}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  {/* Message Stream */}
+                  <div className="lg:col-span-8 space-y-4">
+                    <h3 className="text-sm font-bold text-slate-200">Incoming Message Triage Stream</h3>
+                    {messages.map(item => {
+                      const triaged = triageQuery(item);
+                      return (
+                        <div key={item.id} className="glass-card rounded-2xl p-5 space-y-3 border border-slate-800">
+                          <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                            <div>
+                              <span className="font-bold text-xs text-white">{item.senderName}</span>
+                              <span className="text-[11px] text-slate-400 block">{item.timestamp}</span>
+                            </div>
+                            <span className={`px-2.5 py-1 rounded text-[11px] font-bold border ${triaged.badgeColor}`}>
+                              {triaged.actionLabel}
+                            </span>
+                          </div>
+
+                          <p className="text-xs text-slate-300 italic bg-slate-950 p-3 rounded-xl border border-slate-800">
+                            "{item.rawText}"
+                          </p>
+
+                          {triaged.status === 'SHIELDED_TONE_SOFTENED' && (
+                            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs font-semibold text-amber-300">
+                              🛡️ Tone Transformer: {triaged.toneSoftenedText}
+                            </div>
+                          )}
+
+                          <div className="p-3 rounded-xl bg-slate-950 border border-teal-500/20 space-y-1 text-xs">
+                            <div className="font-bold text-teal-300">AI Context-Aware Response Draft:</div>
+                            <pre className="font-sans text-slate-300 whitespace-pre-wrap">{triaged.aiDraft}</pre>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Simulator Panel */}
+                  <div className="lg:col-span-4 space-y-4">
+                    <div className="glass-card rounded-2xl p-6 space-y-4 border border-teal-500/30">
+                      <h3 className="text-sm font-bold text-slate-200">Late Query Simulator</h3>
+                      <form onSubmit={handleSimulateMsg} className="space-y-3 text-xs">
+                        <div>
+                          <label className="block text-slate-400 mb-1">Parent / Student Name</label>
+                          <input type="text" value={simParent} onChange={e => setSimParent(e.target.value)} className="w-full glass-input rounded-xl p-2.5 text-slate-200" />
+                        </div>
+                        <div>
+                          <label className="block text-slate-400 mb-1">Late Night Query Text</label>
+                          <textarea rows={3} value={simText} onChange={e => setSimText(e.target.value)} placeholder="Type demanding or late message..." className="w-full glass-input rounded-xl p-2.5 text-slate-200 resize-none" />
+                        </div>
+                        <button type="submit" className="w-full py-2.5 rounded-xl bg-teal-500 font-bold text-slate-950">
+                          Simulate Incoming Query
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 4: PRIVACY */}
+            {role === 'EDUCATOR' && activeTab === 'PRIVACY' && (
+              <div className="space-y-6">
+                <div className="glass-card rounded-2xl p-6 border border-emerald-500/20 bg-gradient-to-r from-slate-900 via-emerald-950/20 to-slate-900">
+                  <h2 className="text-2xl font-extrabold text-white">Privacy & Anti-Punitive Architecture</h2>
+                  <p className="text-slate-400 text-sm mt-1">Guarantees that your individual entries cannot be tracked or misused by school administration.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="glass-card rounded-2xl p-5 space-y-2 border-l-4 border-l-emerald-500">
+                    <h3 className="font-bold text-sm text-white">🔑 Local Encryption</h3>
+                    <p className="text-xs text-slate-400">Journal entries and specific mood notes remain encrypted locally on your device.</p>
+                  </div>
+                  <div className="glass-card rounded-2xl p-5 space-y-2 border-l-4 border-l-teal-500">
+                    <h3 className="font-bold text-sm text-white">🙈 Differential Privacy</h3>
+                    <p className="text-xs text-slate-400">School administration only sees anonymized aggregate index scores (N ≥ 5 threshold).</p>
+                  </div>
+                  <div className="glass-card rounded-2xl p-5 space-y-2 border-l-4 border-l-indigo-500">
+                    <h3 className="font-bold text-sm text-white">🚫 Zero Punitive Tracking</h3>
+                    <p className="text-xs text-slate-400">Strict policy prevents burnout telemetry from being referenced in performance evaluations.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ADMIN VIEW */}
+            {role === 'ADMIN' && (
+              <div className="space-y-6">
+                <div className="glass-card rounded-2xl p-6 border border-indigo-500/20 bg-gradient-to-r from-slate-900 via-indigo-950/20 to-slate-900 flex justify-between items-center">
+                  <div>
+                    <h2 className="text-2xl font-extrabold text-white">Institutional Wellness Dashboard</h2>
+                    <p className="text-slate-400 text-sm mt-1">Anonymized department-level wellness metrics for administrative workload allocation.</p>
+                  </div>
+                  <span className="px-3 py-1 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
+                    🔒 Anonymized (N ≥ 5)
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
+                  <div className="glass-card rounded-2xl p-4 border-l-4 border-l-amber-500">
+                    <div className="text-slate-400">Institutional Burnout Index</div>
+                    <div className="text-2xl font-black text-amber-400 font-mono">66.4</div>
+                  </div>
+                  <div className="glass-card rounded-2xl p-4 border-l-4 border-l-rose-500">
+                    <div className="text-slate-400">Avg Overtime / Wk</div>
+                    <div className="text-2xl font-black text-rose-400 font-mono">14.9 hrs</div>
+                  </div>
+                  <div className="glass-card rounded-2xl p-4 border-l-4 border-l-teal-500">
+                    <div className="text-slate-400">Shield Protection Rate</div>
+                    <div className="text-2xl font-black text-teal-400 font-mono">84.2%</div>
+                  </div>
+                  <div className="glass-card rounded-2xl p-4 border-l-4 border-l-indigo-500">
+                    <div className="text-slate-400">Educators Tracked</div>
+                    <div className="text-2xl font-black text-indigo-300 font-mono">62 (Anon)</div>
+                  </div>
+                </div>
+
+                {/* Heatmap Table */}
+                <div className="glass-card rounded-2xl p-6 space-y-4">
+                  <h3 className="text-sm font-bold text-slate-200">Departmental Administrative Overload Matrix</h3>
+                  <div className="overflow-x-auto text-xs">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="border-b border-slate-800 text-slate-400 uppercase font-bold">
+                          <th className="py-2">Department</th>
+                          <th className="py-2">Educators</th>
+                          <th className="py-2">Avg Risk</th>
+                          <th className="py-2">Overtime</th>
+                          <th className="py-2 text-right">Relief Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800">
+                        <tr>
+                          <td className="py-3 font-bold text-white">Humanities & English</td>
+                          <td>18</td>
+                          <td><span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 font-bold">78 (CRITICAL)</span></td>
+                          <td>19.2 hrs/wk</td>
+                          <td className="text-right">
+                            <button onClick={() => alert("Grading relief TA allocated to Humanities.")} className="px-3 py-1 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Deploy Relief</button>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="py-3 font-bold text-white">Mathematics Dept</td>
+                          <td>12</td>
+                          <td><span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">72 (HIGH)</span></td>
+                          <td>16.4 hrs/wk</td>
+                          <td className="text-right">
+                            <button onClick={() => alert("Grading relief TA allocated to Math.")} className="px-3 py-1 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Deploy Relief</button>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="py-3 font-bold text-white">Special Education (IEP)</td>
+                          <td>10</td>
+                          <td><span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 font-bold">84 (CRITICAL)</span></td>
+                          <td>21.0 hrs/wk</td>
+                          <td className="text-right">
+                            <button onClick={() => alert("Admin compliance assistant assigned.")} className="px-3 py-1 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Deploy Relief</button>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+          </main>
+
+          {/* Footer */}
+          <footer className="border-t border-slate-800 py-4 text-center text-xs text-slate-500">
+            🛡️ Teacher Burnout Shield • Confidential Educator Wellness Telemetry
+          </footer>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
